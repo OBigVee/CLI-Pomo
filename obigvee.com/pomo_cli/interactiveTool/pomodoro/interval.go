@@ -36,13 +36,12 @@ type Interval struct{
 
 // define Repo interface
 type Repository interface{
-	Create(i Interval)(int64, error) // create interval
-	Update(i Interval)(error) // update interval
+	Create(i Interval)(int64, error) // create/saves a new interval
+	Update(i Interval)(error) // update details about an interval
 	ByID(id int64)(Interval, error) // retrieve an interval by ID
-	Last ()(Interval, error) // find the last interval
-	Breaks(n int) ([]Interval, error) // retrieve intervals to type
+	Last() (Interval, error) // find the last interval and retrieve it
+	Breaks(n int) ([]Interval, error) // retrieve interval by id
 }
-
 
 
 /**

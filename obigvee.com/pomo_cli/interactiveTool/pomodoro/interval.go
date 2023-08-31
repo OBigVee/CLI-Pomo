@@ -40,7 +40,7 @@ type Repository interface{
 	Update(i Interval)(error) // update details about an interval
 	ByID(id int64)(Interval, error) // retrieve an interval by ID
 	Last() (Interval, error) // find the last interval and retrieve it
-	Breaks(n int) ([]Interval, error) // retrieve interval by id
+	Breaks(n int) ([]Interval, error) // retrieve a given number of interval
 }
 
 

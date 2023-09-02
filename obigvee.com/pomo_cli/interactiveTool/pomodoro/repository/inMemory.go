@@ -53,7 +53,7 @@ func (r *inMemoryRepo)  Update(i pomodoro.Interval) error {
 	* Update - method updates the values of an existing entry in the data store.
 	*/
 	
-	r.Lock()
+	r.Lock() // prevents concurrent access to the data store while making changes to it.
 	defer r.Unlock()
 	if i.ID == 0 {
 		return fmt.Errorf("%w: %d", pomodoro.ErrInvalidID, i.ID)
@@ -64,7 +64,12 @@ func (r *inMemoryRepo)  Update(i pomodoro.Interval) error {
 }
 
 func (r *inMemoryRepo) ByID(id int64)(pomodoro.Interval, error) {
-	r.RLock()
+	/**
+	* ByID - method retrieve and return an item by its ID
+	* @id: id of data to retrieve
+	* Return: data by parsed id or error if no data
+	*/
+	r.RLock() // prevents concurrent access to the data store while making changes to it.
 	defer r.RUnlock()
 	i := pomodoro.Interval{}
 	if id == 0 {
@@ -76,7 +81,13 @@ func (r *inMemoryRepo) ByID(id int64)(pomodoro.Interval, error) {
 }
 
 func (r *inMemoryRepo) Breaks(n int) ([]pomodoro.Interval, error)  {
-	r.RLocker()
+	/**
+	* Breaks - method retrieves a given number n of the intervals of category break
+	*
+	* @n: the value of the number to retrieve of category break
+	* Return: intervals or error if no data
+	*/
+	r.RLocker() // prevents concurrent access to the data store while making changes to it.
 	defer r.RUnlock()
 	data := []pomodoro.Interval{}
 	for k := len(r.intervals) - 1; k >= 0; k-- {

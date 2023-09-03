@@ -10,45 +10,46 @@ import (
 	"obigvee.com/pomo_cli/interactiveTool/pomo/obigvee.com/pomo_cli/interactiveTool/pomodoro"
 )
 
-func TestNewConfig( t *testing.T) {
+func TestNewConfig(t *testing.T) {
 	testCases := []struct {
-		name string
-		input [3] time.Duration
+		name   string
+		input  [3]time.Duration
 		expect pomodoro.IntervalConfig
 	}{
-	{name: "Default",
-	expect: pomodoro.IntervalConfig{
-		PomodoroDuration: 25 * time.Minute,
-		ShortBreakDuration: 5 * time.Minute,
-		LongBreakDuration: 15 * time.Minute,
-	},
-},
-	{name: "SingleInput",
-	 input: [3]time.Duration{
-	  20 * time.Minute,
-	},
-	expect: pomodoro.IntervalConfig{
-	PomodoroDuration: 25 * time.Minute,
-	ShortBreakDuration: 5 * time.Minute,
-	LongBreakDuration: 15 * time.Minute,
-      },
-     },
-     {name: "MultiInput",
-     input: [3]time.Duration{
-     20 * time.Minute,
-     10 * time.Minute,
-     12 * time.Minute,
-    },
-    expect: pomodoro.IntervalConfig{
-      PomodoroDuration: 25 * time.Minute,
-      ShortBreakDuration: 5 * time.Minute,
-      LongBreakDuration: 15 * time.Minute,
-      },
-    },
-},
-// Execute tests for NewConfig
-for _, tc := range testCases{
-		t.Run(tc.name, func(t *testing.T){
+		{name: "Default",
+			expect: pomodoro.IntervalConfig{
+				PomodoroDuration:   25 * time.Minute,
+				ShortBreakDuration: 5 * time.Minute,
+				LongBreakDuration:  15 * time.Minute,
+			},
+		},
+		{name: "SingleInput",
+			input: [3]time.Duration{
+				20 * time.Minute,
+			},
+			expect: pomodoro.IntervalConfig{
+				PomodoroDuration:   20 * time.Minute,
+				ShortBreakDuration: 5 * time.Minute,
+				LongBreakDuration:  15 * time.Minute,
+			},
+		},
+		{name: "MultiInput",
+			input: [3]time.Duration{
+				20 * time.Minute,
+				10 * time.Minute,
+				12 * time.Minute,
+			},
+			expect: pomodoro.IntervalConfig{
+				PomodoroDuration:   20 * time.Minute,
+				ShortBreakDuration: 10 * time.Minute,
+				LongBreakDuration:  12 * time.Minute,
+			},
+		},
+	}
+
+	// Execute tests for NewConfig
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
 			var repo pomodoro.Repository
 			config := pomodoro.NewConfig(
 				repo,
@@ -56,34 +57,37 @@ for _, tc := range testCases{
 				tc.input[1],
 				tc.input[2],
 			)
-			if config.PomodoroDuration != tc.expect.PomodoroDuration{
+
+			if config.PomodoroDuration != tc.expect.PomodoroDuration {
 				t.Errorf("Expected Pomodoro Duration %q, got %q instead\n",
 					tc.expect.PomodoroDuration, config.PomodoroDuration)
 			}
-			if config.ShortBreakDuration != tc.expect.ShortBreakDuration{
-				t.Errorf("Expected ShotrtBreak Duration %q, got %q instead\n",
+			if config.ShortBreakDuration != tc.expect.ShortBreakDuration {
+				t.Errorf("Expected ShortBreak Duration %q, got %q instead\n",
 					tc.expect.ShortBreakDuration, config.ShortBreakDuration)
 			}
-			if config.LongBreakDuration != tc.expect.LongBreakDuration{
+			if config.LongBreakDuration != tc.expect.LongBreakDuration {
 				t.Errorf("Expected LongBreak Duration %q, got %q instead\n",
 					tc.expect.LongBreakDuration, config.LongBreakDuration)
 			}
+
 		})
 	}
 }
 
-func TestGetInterVal(t *testing.T) {
+func TestGetInterval(t *testing.T) {
 	repo, cleanup := getRepo(t)
 	defer cleanup()
 
 	const duration = 1 * time.Millisecond
 	config := pomodoro.NewConfig(repo, 3*duration, duration, 2*duration)
 
-	for i := 1; i <= 16;i++{
+	for i := 1; i <= 16; i++ {
 		var (
 			expCategory string
 			expDuration time.Duration
 		)
+
 		switch {
 		case i%2 != 0:
 			expCategory = pomodoro.CategoryPomodoro
@@ -95,30 +99,37 @@ func TestGetInterVal(t *testing.T) {
 			expCategory = pomodoro.CategoryShortBreak
 			expDuration = duration
 		}
-		testName := fmt.Sprintf("%s %d", expCategory, i)
+
+		testName := fmt.Sprintf("%s%d", expCategory, i)
 		t.Run(testName, func(t *testing.T) {
-			res, err := pomodoro.GetInterval(config)
+			res, err := pomodoro.GetInterVal(config)
 
 			if err != nil {
 				t.Errorf("Expected no error, got %q.\n", err)
 			}
-			noop := func(interval pomodoro.Interval){}
-			if err := res.Start(context.Background(),
-				config, noop, noop, noop); err != nil {
+
+			noop := func(pomodoro.Interval) {}
+
+			if err := res.Start(context.Background(), config,
+				noop, noop, noop); err != nil {
 				t.Fatal(err)
 			}
-			if res.Category != expCategory{
+
+			if res.Category != expCategory {
 				t.Errorf("Expected category %q, got %q.\n",
 					expCategory, res.Category)
 			}
+
 			if res.PlannedDuration != expDuration {
 				t.Errorf("Expected PlannedDuration %q, got %q.\n",
 					expDuration, res.PlannedDuration)
 			}
+
 			if res.State != pomodoro.StateNotStarted {
 				t.Errorf("Expected State = %q, got %q.\n",
 					pomodoro.StateNotStarted, res.State)
 			}
+
 			ui, err := repo.ByID(res.ID)
 			if err != nil {
 				t.Errorf("Expected no error. Got %q.\n", err)
@@ -126,14 +137,13 @@ func TestGetInterVal(t *testing.T) {
 
 			if ui.State != pomodoro.StateDone {
 				t.Errorf("Expected State = %q, got %q.\n",
-			pomodoro.StateDone, res.State)
+					pomodoro.StateDone, res.State)
 			}
 		})
 	}
 }
 
-
-func TestPause(t *testing.T)  {
+func TestPause(t *testing.T) {
 	const duration = 2 * time.Second
 
 	repo, cleanup := getRepo(t)
@@ -142,22 +152,22 @@ func TestPause(t *testing.T)  {
 	config := pomodoro.NewConfig(repo, duration, duration, duration)
 
 	testCases := []struct {
-		name string
-		start bool
-		expState int
+		name        string
+		start       bool
+		expState    int
 		expDuration time.Duration
 	}{
 		{name: "NotStarted", start: false,
 			expState: pomodoro.StateNotStarted, expDuration: 0},
-		{name: "Paused", start:true,
+		{name: "Paused", start: true,
 			expState: pomodoro.StatePaused, expDuration: duration / 2},
 	}
 
 	expError := pomodoro.ErrIntervalNotRunning
 
 	// Execute tests for Pause
-	for _, tc := range testCases{
-		t.Run(tc.name, func(t *testing.T){
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 
 			i, err := pomodoro.GetInterVal(config)
@@ -165,29 +175,30 @@ func TestPause(t *testing.T)  {
 				t.Fatal(err)
 			}
 
-			start := func(pomodoro.Interval){}
-			end := func (pomodoro.Interval)  {
+			start := func(pomodoro.Interval) {}
+			end := func(pomodoro.Interval) {
 				t.Errorf("End callback should not be executed")
 			}
-			periodic := func (i pomodoro.Interval)  {
-				if err := i.Pause(config); err != nil{
+			periodic := func(i pomodoro.Interval) {
+				if err := i.Pause(config); err != nil {
 					t.Fatal(err)
 				}
 			}
-			if tc.start{
-				if err := i.Start(ctx, config, start, periodic, end); err != nil{
+
+			if tc.start {
+				if err := i.Start(ctx, config, start, periodic, end); err != nil {
 					t.Fatal(err)
 				}
 			}
-			
+
 			i, err = pomodoro.GetInterVal(config)
-			if err != nil{
+			if err != nil {
 				t.Fatal(err)
 			}
 
 			err = i.Pause(config)
-			if err != nil{
-				if ! errors.Is(err, expError) {
+			if err != nil {
+				if !errors.Is(err, expError) {
 					t.Fatalf("Expected error %q, got %q", expError, err)
 				}
 			}
@@ -203,7 +214,7 @@ func TestPause(t *testing.T)  {
 
 			if i.State != tc.expState {
 				t.Errorf("Expected state %d, got %d.\n",
-			tc.expState, i.State)
+					tc.expState, i.State)
 			}
 
 			if i.ActualDuration != tc.expDuration {
@@ -215,31 +226,30 @@ func TestPause(t *testing.T)  {
 	}
 }
 
-
-func TestStart(t *testing.T){
+func TestStart(t *testing.T) {
 	const duration = 2 * time.Second
-	
+
 	repo, cleanup := getRepo(t)
 	defer cleanup()
 
 	config := pomodoro.NewConfig(repo, duration, duration, duration)
 
 	testCases := []struct {
-		name string
-		cancel bool
-		expState int
+		name        string
+		cancel      bool
+		expState    int
 		expDuration time.Duration
 	}{
-		{name:"Finish", cancel: false,
-			expState: pomodoro.StateDone, expDuration: duration},
 
+		{name: "Finish", cancel: false,
+			expState: pomodoro.StateDone, expDuration: duration},
 		{name: "Cancel", cancel: true,
 			expState: pomodoro.StateCancelled, expDuration: duration / 2},
 	}
 
 	// Execute tests for Start
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing) {
+		t.Run(tc.name, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 
 			i, err := pomodoro.GetInterVal(config)
@@ -257,19 +267,18 @@ func TestStart(t *testing.T){
 						i.ActualDuration, i.PlannedDuration)
 				}
 			}
-			
-			end := func (i pomodoro.Interval)  {
+
+			end := func(i pomodoro.Interval) {
 				if i.State != tc.expState {
 					t.Errorf("Expected state %d, got %d.\n",
 						tc.expState, i.State)
 				}
-
 				if tc.cancel {
 					t.Errorf("End callback should not be executed")
 				}
 			}
 
-			periodic := func(i pomodoro.Interval){
+			periodic := func(i pomodoro.Interval) {
 				if i.State != pomodoro.StateRunning {
 					t.Errorf("Expected state %d, got %d.\n",
 						pomodoro.StateRunning, i.State)
@@ -283,7 +292,7 @@ func TestStart(t *testing.T){
 				t.Fatal(err)
 			}
 
-			i, err = repo.ById(i.ID)
+			i, err = repo.ByID(i.ID)
 			if err != nil {
 				t.Fatal(err)
 			}
